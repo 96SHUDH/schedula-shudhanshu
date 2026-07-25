@@ -7,8 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-<<<<<<< Updated upstream
-=======
 model User {
   id             String          @id @default(uuid())
   name           String
@@ -40,16 +38,17 @@ model DoctorProfile {
 }
 
 model PatientProfile {
-  id         String   @id @default(uuid())
-  fullName   String
-  age        Int
-  gender     String
-  contact    String
-  healthInfo String?
-  userId     String   @unique
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String        @id @default(uuid())
+  fullName     String
+  age          Int
+  gender       String
+  contact      String
+  healthInfo   String?
+  userId       String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
 }
 
 model RecurringAvailability {
@@ -59,44 +58,77 @@ model RecurringAvailability {
   startTime String
   endTime   String
 
+  schedulingType SchedulingType
+
+  slotDuration Int?
+  bufferTime   Int?
+  capacity     Int?
+
   doctorProfileId String
   doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
 }
 
 model CustomAvailability {
   id String @id @default(uuid())
 
-  date      DateTime
+  date DateTime
+
   startTime String
   endTime   String
 
+  schedulingType SchedulingType
+
+  slotDuration Int?
+  bufferTime   Int?
+  capacity     Int?
+
   doctorProfileId String
   doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  appointments Appointment[]
+}
+
+model Appointment {
+  id String @id @default(uuid())
+
+  patientProfileId String
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+
+  recurringAvailabilityId String?
+  recurringAvailability   RecurringAvailability? @relation(fields: [recurringAvailabilityId], references: [id])
+
+  customAvailabilityId String?
+  customAvailability   CustomAvailability? @relation(fields: [customAvailabilityId], references: [id])
+
+  schedulingType SchedulingType
+
+  appointmentDate DateTime?
+
+  slotStart String?
+  slotEnd   String?
+
+  tokenNumber Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
->>>>>>> Stashed changes
 enum Role {
   DOCTOR
   PATIENT
 }
 
-<<<<<<< Updated upstream
-model User {
-  id       String @id @default(uuid())
-  name     String
-  email    String @unique
-  password String
-  role     Role
+enum SchedulingType {
+  STREAM
+  WAVE
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-=======
 enum DayOfWeek {
   MONDAY
   TUESDAY
@@ -105,5 +137,4 @@ enum DayOfWeek {
   FRIDAY
   SATURDAY
   SUNDAY
->>>>>>> Stashed changes
 }
