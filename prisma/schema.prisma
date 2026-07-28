@@ -7,11 +7,86 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+<<<<<<< Updated upstream
+=======
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  password       String
+  role           Role
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  doctorProfile  DoctorProfile?
+  patientProfile PatientProfile?
+}
+
+model DoctorProfile {
+  id              String   @id @default(uuid())
+  fullName        String
+  specialization  String
+  experience      Int
+  qualification   String
+  consultationFee Float
+  availability    String
+  profileDetails  String?
+  userId          String   @unique
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  recurringAvailabilities RecurringAvailability[]
+  customAvailabilities    CustomAvailability[]
+}
+
+model PatientProfile {
+  id         String   @id @default(uuid())
+  fullName   String
+  age        Int
+  gender     String
+  contact    String
+  healthInfo String?
+  userId     String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RecurringAvailability {
+  id String @id @default(uuid())
+
+  dayOfWeek DayOfWeek
+  startTime String
+  endTime   String
+
+  doctorProfileId String
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CustomAvailability {
+  id String @id @default(uuid())
+
+  date      DateTime
+  startTime String
+  endTime   String
+
+  doctorProfileId String
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+>>>>>>> Stashed changes
 enum Role {
   DOCTOR
   PATIENT
 }
 
+<<<<<<< Updated upstream
 model User {
   id       String @id @default(uuid())
   name     String
@@ -21,4 +96,14 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+=======
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+>>>>>>> Stashed changes
 }
