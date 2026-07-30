@@ -79,15 +79,54 @@ export class AvailabilityService {
       );
     }
 
-    const availability =
-      await this.prisma.recurringAvailability.create({
-        data: {
-          dayOfWeek: createAvailabilityDto.dayOfWeek,
-          startTime: createAvailabilityDto.startTime,
-          endTime: createAvailabilityDto.endTime,
-          doctorProfileId: doctor.id,
-        },
-      });
+    // STREAM validation
+if (createAvailabilityDto.schedulingType === 'STREAM') {
+  if (!createAvailabilityDto.slotDuration) {
+    throw new BadRequestException(
+      'Slot duration is required for STREAM scheduling',
+    );
+  }
+
+  if (createAvailabilityDto.capacity) {
+    throw new BadRequestException(
+      'Capacity should not be provided for STREAM scheduling',
+    );
+  }
+}
+
+// WAVE validation
+if (createAvailabilityDto.schedulingType === 'WAVE') {
+  if (!createAvailabilityDto.capacity) {
+    throw new BadRequestException(
+      'Capacity is required for WAVE scheduling',
+    );
+  }
+
+  if (
+    createAvailabilityDto.slotDuration ||
+    createAvailabilityDto.bufferTime
+  ) {
+    throw new BadRequestException(
+      'Slot duration and buffer time are not applicable for WAVE scheduling',
+    );
+  }
+}
+
+const availability =
+  await this.prisma.recurringAvailability.create({
+    data: {
+      dayOfWeek: createAvailabilityDto.dayOfWeek,
+      startTime: createAvailabilityDto.startTime,
+      endTime: createAvailabilityDto.endTime,
+
+      schedulingType: createAvailabilityDto.schedulingType,
+      slotDuration: createAvailabilityDto.slotDuration,
+      bufferTime: createAvailabilityDto.bufferTime,
+      capacity: createAvailabilityDto.capacity,
+
+      doctorProfileId: doctor.id,
+    },
+  });
 
     return {
       message: 'Availability created successfully',
@@ -311,15 +350,54 @@ async createOverride(
     );
   }
 
-  const availability =
-    await this.prisma.customAvailability.create({
-      data: {
-        date: new Date(createOverrideDto.date),
-        startTime: createOverrideDto.startTime,
-        endTime: createOverrideDto.endTime,
-        doctorProfileId: doctor.id,
-      },
-    });
+  // STREAM validation
+if (createOverrideDto.schedulingType === 'STREAM') {
+  if (!createOverrideDto.slotDuration) {
+    throw new BadRequestException(
+      'Slot duration is required for STREAM scheduling',
+    );
+  }
+
+  if (createOverrideDto.capacity) {
+    throw new BadRequestException(
+      'Capacity should not be provided for STREAM scheduling',
+    );
+  }
+}
+
+// WAVE validation
+if (createOverrideDto.schedulingType === 'WAVE') {
+  if (!createOverrideDto.capacity) {
+    throw new BadRequestException(
+      'Capacity is required for WAVE scheduling',
+    );
+  }
+
+  if (
+    createOverrideDto.slotDuration ||
+    createOverrideDto.bufferTime
+  ) {
+    throw new BadRequestException(
+      'Slot duration and buffer time are not applicable for WAVE scheduling',
+    );
+  }
+}
+
+const availability =
+  await this.prisma.customAvailability.create({
+    data: {
+      date: new Date(createOverrideDto.date),
+      startTime: createOverrideDto.startTime,
+      endTime: createOverrideDto.endTime,
+
+      schedulingType: createOverrideDto.schedulingType,
+      slotDuration: createOverrideDto.slotDuration,
+      bufferTime: createOverrideDto.bufferTime,
+      capacity: createOverrideDto.capacity,
+
+      doctorProfileId: doctor.id,
+    },
+  });
 
   return {
     message: 'Custom availability created successfully',
