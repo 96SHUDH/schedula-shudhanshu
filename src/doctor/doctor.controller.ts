@@ -6,6 +6,8 @@ import {
   Post,
   Req,
   UseGuards,
+  Param,
+  Query,
 } from '@nestjs/common';
 
 import { DoctorService } from './doctor.service';
@@ -17,13 +19,15 @@ import { CreateDoctorProfileDto } from './dto/create-doctor-profile.dto';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 
 @Controller('doctor')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('DOCTOR')
+@UseGuards(JwtAuthGuard)
+
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 
   // Create Doctor Profile
   @Post('profile')
+  @UseGuards(RolesGuard)
+  @Roles('DOCTOR')
   createProfile(
     @Req() req,
     @Body() createDoctorProfileDto: CreateDoctorProfileDto,
@@ -36,12 +40,16 @@ export class DoctorController {
 
   // Get Doctor Profile
   @Get('profile')
+  @UseGuards(RolesGuard)
+  @Roles('DOCTOR')
   getProfile(@Req() req) {
     return this.doctorService.getProfile(req.user.sub);
   }
 
   // Update Doctor Profile
   @Patch('profile')
+  @UseGuards(RolesGuard)
+  @Roles('DOCTOR')
   updateProfile(
     @Req() req,
     @Body() updateDoctorProfileDto: UpdateDoctorProfileDto,
@@ -49,6 +57,17 @@ export class DoctorController {
     return this.doctorService.updateProfile(
       req.user.sub,
       updateDoctorProfileDto,
+    );
+  }
+
+  @Get(':doctorId/slots')
+  getDoctorSlots(
+    @Param('doctorId') doctorId: string,
+    @Query('date') date:string,
+  ) {
+    return this.doctorService.getDoctorSlots(
+      doctorId,
+      date,
     );
   }
 }

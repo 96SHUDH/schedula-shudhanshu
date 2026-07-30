@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { DoctorController } from './doctor.controller';
 import { DoctorService } from './doctor.service';
 import { PrismaModule } from '../prisma/prisma.module';
-
+import { SchedulingModule } from 'src/scheduling/scheduling.module';
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, SchedulingModule],
   controllers: [DoctorController],
   providers: [DoctorService],
 })

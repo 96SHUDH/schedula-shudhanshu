@@ -20,8 +20,8 @@ export class SchedulingService {
       };
     }
 
-    // STREAM Scheduling
-    if (availability.schedulingType === 'STREAM') {
+    // WAVE Scheduling
+    if (availability.schedulingType === 'WAVE') {
       const slots: {
       start: string;
       end: string;
@@ -59,15 +59,15 @@ export class SchedulingService {
       }
 
       return {
-        schedulingType: 'STREAM',
+        schedulingType: 'WAVE',
         slots,
       };
     }
 
-    // WAVE Scheduling
-    if (availability.schedulingType === 'WAVE') {
+    // STREAM Scheduling
+    if (availability.schedulingType === 'STREAM') {
       return {
-        schedulingType: 'WAVE',
+        schedulingType: 'STREAM',
         window: {
           start: availability.startTime,
           end: availability.endTime,
