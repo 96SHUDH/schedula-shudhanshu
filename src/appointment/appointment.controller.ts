@@ -3,12 +3,14 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
 
 import { AppointmentService } from './appointment.service';
+import { CreateAppointmentDto } from './dto/create-appointment.dto';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -21,38 +23,43 @@ export class AppointmentController {
     private readonly appointmentService: AppointmentService,
   ) {}
 
-  // Patient books an appointment
-  @Post('book/:availabilityId')
+  // Book Appointment
+  @Post()
   @Roles('PATIENT')
   bookAppointment(
-    @Param('availabilityId') availabilityId: string,
     @Req() req,
+    @Body() createAppointmentDto: CreateAppointmentDto,
   ) {
     return this.appointmentService.bookAppointment(
       req.user.sub,
-      availabilityId,
+      createAppointmentDto,
     );
   }
 
-  // Patient can view all appointments
+  // Patient Appointments
   @Get('my')
   @Roles('PATIENT')
   getMyAppointments(@Req() req) {
-    return this.appointmentService.getMyAppointments(
-      req.user.sub,
-    );
+    return this.appointmentService.getMyAppointments(req.user.sub);
   }
 
-  // Doctor can view bookings for one availability
-  @Get('doctor/:availabilityId')
+  // Doctor Appointments
+  @Get('doctor')
   @Roles('DOCTOR')
-  getDoctorAppointments(
-    @Param('availabilityId') availabilityId: string,
+  getDoctorAppointments(@Req() req) {
+    return this.appointmentService.getDoctorAppointments(req.user.sub);
+  }
+
+  // Cancel Appointment
+  @Patch(':id/cancel')
+  @Roles('PATIENT')
+  cancelAppointment(
+    @Param('id') appointmentId: string,
     @Req() req,
   ) {
-    return this.appointmentService.getDoctorAppointments(
+    return this.appointmentService.cancelAppointment(
       req.user.sub,
-      availabilityId,
+      appointmentId,
     );
   }
 }

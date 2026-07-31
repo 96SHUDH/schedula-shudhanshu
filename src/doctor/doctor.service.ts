@@ -6,10 +6,13 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDoctorProfileDto } from './dto/create-doctor-profile.dto';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
-
+import { SchedulingService } from '../scheduling/scheduling.service';
 @Injectable()
 export class DoctorService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+  private prisma: PrismaService,
+  private schedulingService: SchedulingService,
+) {}
 
   // Create Doctor Profile
   async createProfile(
@@ -87,5 +90,56 @@ export class DoctorService {
       message: 'Doctor profile updated successfully',
       profile: updatedProfile,
     };
+  }
+  // Get Doctor Slots
+async getDoctorSlots(
+  doctorId: string,
+  date: string,
+) {
+  const doctor = await this.prisma.doctorProfile.findUnique({
+    where: {
+      id: doctorId,
+    },
+  });
+
+  if (!doctor) {
+    throw new NotFoundException('Doctor not found');
+  }
+
+  const selectedDate = new Date(date);
+
+  if (isNaN(selectedDate.getTime())) {
+    throw new BadRequestException('Invalid date');
+  }
+
+  const dayMap = [
+    'SUNDAY',
+    'MONDAY',
+    'TUESDAY',
+    'WEDNESDAY',
+    'THURSDAY',
+    'FRIDAY',
+    'SATURDAY',
+  ];
+
+  const dayOfWeek = dayMap[selectedDate.getDay()];
+
+  const availability =
+    await this.prisma.recurringAvailability.findFirst({
+      where: {
+        doctorProfileId: doctor.id,
+        dayOfWeek: dayOfWeek as any,
+      },
+    });
+
+  if (!availability) {
+    throw new NotFoundException(
+      'No availability found for this date',
+    );
+  }
+
+  return this.schedulingService.generateSchedule(
+    availability.id,
+  );
   }
 }

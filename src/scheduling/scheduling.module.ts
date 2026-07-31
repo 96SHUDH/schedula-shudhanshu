@@ -9,5 +9,6 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [PrismaModule],
   controllers: [SchedulingController],
   providers: [SchedulingService],
+  exports: [SchedulingService],
 })
 export class SchedulingModule {}
