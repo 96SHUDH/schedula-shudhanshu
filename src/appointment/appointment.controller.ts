@@ -1,8 +1,8 @@
 import {
-  Body,
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -21,7 +21,9 @@ export class AppointmentController {
     private readonly appointmentService: AppointmentService,
   ) {}
 
+  // ============================
   // Patient books an appointment
+  // ============================
   @Post('book/:availabilityId')
   @Roles('PATIENT')
   bookAppointment(
@@ -34,7 +36,9 @@ export class AppointmentController {
     );
   }
 
-  // Patient can view all appointments
+  // ============================
+  // Patient can view appointments
+  // ============================
   @Get('my')
   @Roles('PATIENT')
   getMyAppointments(@Req() req) {
@@ -43,7 +47,9 @@ export class AppointmentController {
     );
   }
 
-  // Doctor can view bookings for one availability
+  // ============================
+  // Doctor can view appointments
+  // ============================
   @Get('doctor/:availabilityId')
   @Roles('DOCTOR')
   getDoctorAppointments(
@@ -53,6 +59,21 @@ export class AppointmentController {
     return this.appointmentService.getDoctorAppointments(
       req.user.sub,
       availabilityId,
+    );
+  }
+
+  // ============================
+  // Patient cancels appointment
+  // ============================
+  @Patch(':id/cancel')
+  @Roles('PATIENT')
+  cancelAppointment(
+    @Param('id') appointmentId: string,
+    @Req() req,
+  ) {
+    return this.appointmentService.cancelAppointment(
+      req.user.sub,
+      appointmentId,
     );
   }
 }

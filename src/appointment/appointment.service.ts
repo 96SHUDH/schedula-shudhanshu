@@ -221,5 +221,75 @@ async getDoctorAppointments(
     message: 'Appointments fetched successfully',
     appointments,
   };
+  }
+  // ============================
+// CANCEL APPOINTMENT
+// ============================
+async cancelAppointment(
+  userId: string,
+  appointmentId: string,
+) {
+  // Find patient
+  const patient =
+    await this.prisma.patientProfile.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+  if (!patient) {
+    throw new NotFoundException(
+      'Patient profile not found',
+    );
+  }
+
+  // Find appointment
+  const appointment =
+    await this.prisma.appointment.findUnique({
+      where: {
+        id: appointmentId,
+      },
+    });
+
+  if (!appointment) {
+    throw new NotFoundException(
+      'Appointment not found',
+    );
+  }
+
+  // Only owner can cancel
+  if (
+    appointment.patientProfileId !== patient.id
+  ) {
+    throw new BadRequestException(
+      'You are not allowed to cancel this appointment',
+    );
+  }
+
+  // Already cancelled
+  if (
+    appointment.status === 'CANCELLED'
+  ) {
+    throw new BadRequestException(
+      'Appointment already cancelled',
+    );
+  }
+
+  // Cancel appointment
+  const updatedAppointment =
+    await this.prisma.appointment.update({
+      where: {
+        id: appointmentId,
+      },
+      data: {
+        status: 'CANCELLED',
+      },
+    });
+
+  return {
+    message:
+      'Appointment cancelled successfully',
+    appointment: updatedAppointment,
+  };
 }
 }

@@ -79,39 +79,44 @@ export class AvailabilityService {
       );
     }
 
-    // STREAM validation
-if (createAvailabilityDto.schedulingType === 'STREAM') {
+// WAVE validation (Slot Based)
+if (createAvailabilityDto.schedulingType === 'WAVE') {
   if (!createAvailabilityDto.slotDuration) {
     throw new BadRequestException(
-      'Slot duration is required for STREAM scheduling',
+      'Slot duration is required for WAVE scheduling',
     );
   }
 
-  if (createAvailabilityDto.capacity) {
+  if (!createAvailabilityDto.bufferTime) {
     throw new BadRequestException(
-      'Capacity should not be provided for STREAM scheduling',
+      'Buffer time is required for WAVE scheduling',
     );
   }
-}
 
-// WAVE validation
-if (createAvailabilityDto.schedulingType === 'WAVE') {
   if (!createAvailabilityDto.capacity) {
     throw new BadRequestException(
       'Capacity is required for WAVE scheduling',
     );
   }
+}
 
+// STREAM validation (Continuous Window)
+if (createAvailabilityDto.schedulingType === 'STREAM') {
   if (
     createAvailabilityDto.slotDuration ||
     createAvailabilityDto.bufferTime
   ) {
     throw new BadRequestException(
-      'Slot duration and buffer time are not applicable for WAVE scheduling',
+      'Slot duration and buffer time are not applicable for STREAM scheduling',
+    );
+  }
+
+  if (!createAvailabilityDto.capacity) {
+    throw new BadRequestException(
+      'Capacity is required for STREAM scheduling',
     );
   }
 }
-
 const availability =
   await this.prisma.recurringAvailability.create({
     data: {
