@@ -1,98 +1,223 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Schedula Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A production-ready backend API for **Schedula**, an appointment scheduling platform that allows doctors to manage their availability and patients to book appointments using **STREAM** and **WAVE** scheduling.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+# Live Deployment
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+**Backend URL**
 
-## Project setup
+https://your-render-url.onrender.com
 
-```bash
-$ npm install
+Example:
+
+https://schedula-shudhanshu.onrender.com
+
+---
+
+# Tech Stack
+
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL (Neon)
+- JWT Authentication
+- Class Validator
+- Render (Deployment)
+
+---
+
+# Hosted Database
+
+Database Provider
+
+**Neon PostgreSQL**
+
+The application uses a hosted PostgreSQL database provided by Neon for production deployment.
+
+---
+
+# Deployment Platform
+
+**Render**
+
+The backend is deployed on Render and is publicly accessible.
+
+---
+
+# Environment Variables
+
+The following environment variables are configured securely on Render.
+
+```env
+DATABASE_URL=your_neon_database_url
+JWT_SECRET=your_secret_key
+PORT=10000
 ```
 
-## Compile and run the project
+> Sensitive credentials are stored using Render Environment Variables and are **not hardcoded** in the source code.
 
-```bash
-# development
-$ npm run start
+---
 
-# watch mode
-$ npm run start:dev
+# Features
 
-# production mode
-$ npm run start:prod
+## Authentication
+
+- User Signup
+- User Login
+- JWT Authentication
+- Role-Based Authorization
+- Doctor Role
+- Patient Role
+
+---
+
+## Doctor Module
+
+- Create Doctor Profile
+- Get Doctor Profile
+- Update Doctor Profile
+
+---
+
+## Patient Module
+
+- Create Patient Profile
+- Get Patient Profile
+- Update Patient Profile
+
+---
+
+## Availability Management
+
+- Create Recurring Availability
+- Create Availability Override
+- Update Availability
+- Delete Availability
+- Get Availability
+- Get Availability By Date
+
+Supports
+
+- STREAM Scheduling
+- WAVE Scheduling
+
+---
+
+## Appointment Module
+
+- Book Appointment
+- View Patient Appointments
+- View Doctor Appointments
+- Cancel Appointment
+
+---
+
+# API Testing
+
+The deployed APIs have been successfully tested using **Postman**.
+
+Tested APIs include:
+
+```
+POST   /auth/signup
+POST   /auth/login
+
+POST   /doctor/profile
+GET    /doctor/profile
+PATCH  /doctor/profile
+
+POST   /patient/profile
+GET    /patient/profile
+PATCH  /patient/profile
+
+POST   /doctor/availability
+GET    /doctor/availability
+PATCH  /doctor/availability/:id
+DELETE /doctor/availability/:id
+
+POST   /appointments
+GET    /appointments/my
+GET    /appointments/doctor
+PATCH  /appointments/:id/cancel
 ```
 
-## Run tests
+---
+
+# Deployment Checklist
+
+- Backend deployed successfully
+- Public URL accessible
+- Hosted PostgreSQL database connected
+- Environment variables configured
+- APIs tested on deployed server
+- Production build successful
+
+---
+
+# Local Setup
+
+Clone the repository
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+git clone https://github.com/96SHUDH/schedula-shudhanshu.git
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Install dependencies
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Generate Prisma Client
 
-## Resources
+```bash
+npx prisma generate
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+Run database migrations
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+npx prisma migrate deploy
+```
 
-## Support
+Start development server
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them [read more here](https://docs.nestjs.com/support).
+```bash
+npm run start:dev
+```
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Build
 
-## License
+```bash
+npm run build
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+# Production
+
+```bash
+npm run start:prod
+```
+
+---
+
+# Repository
+
+GitHub Repository
+
+https://github.com/96SHUDH/schedula-shudhanshu
+
+---
+
+# Author
+
+**Shudhanshu Chaubey**
+
+Backend Internship Project
+
+Built using NestJS, Prisma, PostgreSQL, and Render.
