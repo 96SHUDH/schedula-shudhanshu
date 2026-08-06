@@ -1,3 +1,4 @@
+import { RescheduleAppointmentDto } from './dto/reschedule-appointment.dto';
 import {
   BadRequestException,
   Injectable,
@@ -6,6 +7,7 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
+
 @Injectable()
 export class AppointmentService {
   constructor(private prisma: PrismaService) {}
@@ -83,37 +85,89 @@ async bookAppointment(
     // ============================
 
     if (availability.schedulingType === 'WAVE') {
-      const appointment =
-        await this.prisma.appointment.create({
-          data: {
-            patientProfileId: patient.id,
 
-            recurringAvailabilityId:
-              availability.id,
+    const bookingCount =
+      await this.prisma.appointment.count({
+        where: {
+          recurringAvailabilityId: availability.id,
+          appointmentDate: new Date(createAppointmentDto.date),
+          status: 'BOOKED',
+        },
+      });
 
-            schedulingType:
-              availability.schedulingType,
+    if (
+      bookingCount >=
+      (availability.capacity ?? 0)
+    ) {
 
-            appointmentDate: new Date(
-              createAppointmentDto.date,
-            ),
+      throw new BadRequestException(
+        'Wave is full',
+      );
 
-            slotStart:
-              createAppointmentDto.startTime,
-
-            slotEnd:
-              createAppointmentDto.endTime,
-
-            status: 'BOOKED',
-          },
-        });
-
-      return {
-        message:
-          'Appointment booked successfully',
-        appointment,
-      };
+      // Later we'll replace this with
+      // next available suggestion.
     }
+
+    const tokenNumber =
+      bookingCount + 1;
+
+    const appointmentDateTime = new Date(
+    createAppointmentDto.date,
+    );
+
+    const [hours, minutes] =
+      availability.startTime.split(':').map(Number);
+
+    appointmentDateTime.setHours(
+      hours,
+      minutes,
+      0,
+      0,
+    );  
+    const appointment =
+      await this.prisma.appointment.create({
+        data: {
+
+          patientProfileId: patient.id,
+
+          recurringAvailabilityId:
+            availability.id,
+
+          schedulingType:
+            availability.schedulingType,
+
+          appointmentDate:
+            appointmentDateTime,
+
+          slotStart:
+            createAppointmentDto.startTime,
+
+          slotEnd:
+            createAppointmentDto.endTime,
+
+          tokenNumber,
+
+          status: 'BOOKED',
+        },
+      });
+
+    return {
+
+      message:
+        'Appointment booked successfully',
+
+      tokenNumber,
+
+      appointmentWindow: {
+
+        start: availability.startTime,
+
+        end: availability.endTime,
+      },
+
+      appointment,
+    };
+  }
 
     // ============================
     // STREAM Scheduling
@@ -352,6 +406,9 @@ async cancelAppointment(
       where: {
         id: appointmentId,
       },
+      include: {
+        recurringAvailability:true,
+      },
     });
 
   if (!appointment) {
@@ -376,15 +433,19 @@ async cancelAppointment(
     );
   }
 
-  // Past appointment cannot be cancelled
-  if (
-    appointment.appointmentDate &&
-    appointment.appointmentDate < new Date()
-  ) {
+  if (!appointment.appointmentDate) {
     throw new BadRequestException(
-      'Past appointments cannot be cancelled',
+      'Appointment date missing',
     );
   }
+
+  const appointmentTime =
+    appointment.slotStart ??
+    appointment.recurringAvailability?.startTime;
+  this.validateThirtyMinuteRule(
+    appointment.appointmentDate!,
+    appointmentTime,
+  );
 
   const updatedAppointment =
     await this.prisma.appointment.update({
@@ -400,5 +461,259 @@ async cancelAppointment(
     message: 'Appointment cancelled successfully',
     appointment: updatedAppointment,
   };
+  }
+  // RESCHEDULE APPOINTMENT
+
+async rescheduleAppointment(
+  userId: string,
+  appointmentId: string,
+  createAppointmentDto: CreateAppointmentDto,
+) {
+  // Find patient
+  const patient =
+    await this.prisma.patientProfile.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+  if (!patient) {
+    throw new NotFoundException(
+      'Patient profile not found',
+    );
+  }
+
+  // Find appointment
+  const appointment =
+    await this.prisma.appointment.findUnique({
+      where: {
+        id: appointmentId,
+      },
+
+    include:{
+        recurringAvailability:true,
+    }
+  });
+
+  if (!appointment) {
+    throw new NotFoundException(
+      'Appointment not found',
+    );
+  }
+
+  // Owner check
+  if (
+    appointment.patientProfileId !== patient.id
+  ) {
+    throw new BadRequestException(
+      'You are not allowed to reschedule this appointment',
+    );
+  }
+
+  // Cancelled?
+  if (appointment.status === 'CANCELLED') {
+    throw new BadRequestException(
+      'Cancelled appointment cannot be rescheduled',
+    );
+  }
+  if (!appointment.appointmentDate) {
+    throw new BadRequestException(
+      'Appointment date missing',
+    );
+  }
+
+  const appointmentTime =
+    appointment.slotStart ??
+    appointment.recurringAvailability?.startTime;
+  this.validateThirtyMinuteRule(
+    appointment.appointmentDate!,
+    appointmentTime,
+  );
+  // Past appointment?
+  if (
+    appointment.appointmentDate &&
+    appointment.appointmentDate < new Date()
+  ) {
+    throw new BadRequestException(
+      'Past appointment cannot be rescheduled',
+    );
+  }
+
+  // Find doctor
+  const doctor =
+    await this.prisma.doctorProfile.findUnique({
+      where: {
+        id: createAppointmentDto.doctorId,
+      },
+    });
+
+  if (!doctor) {
+    throw new NotFoundException(
+      'Doctor not found',
+    );
+  }
+
+  // Find doctor's availability
+  const availability =
+    await this.prisma.recurringAvailability.findFirst({
+      where: {
+        doctorProfileId: doctor.id,
+      },
+    });
+
+  if (!availability) {
+    throw new NotFoundException(
+      'Doctor availability not found',
+    );
+  }
+
+  // Same slot?
+  if (
+    appointment.recurringAvailabilityId ===
+      availability.id &&
+    appointment.appointmentDate?.toISOString().split('T')[0] ===
+      createAppointmentDto.date &&
+    appointment.slotStart ===
+      createAppointmentDto.startTime &&
+    appointment.slotEnd ===
+      createAppointmentDto.endTime
+  ) {
+    throw new BadRequestException(
+      'Cannot reschedule to the same slot',
+    );
+  }
+
+  // STREAM validation
+  if (
+    availability.schedulingType === 'STREAM'
+  ) {
+    const existingBooking =
+      await this.prisma.appointment.findFirst({
+        where: {
+          recurringAvailabilityId:
+            availability.id,
+          appointmentDate: new Date(
+            createAppointmentDto.date,
+          ),
+          slotStart:
+            createAppointmentDto.startTime,
+          slotEnd:
+            createAppointmentDto.endTime,
+          status: 'BOOKED',
+          NOT: {
+            id: appointment.id,
+          },
+        },
+      });
+
+    if (existingBooking) {
+      throw new BadRequestException(
+        'Requested slot already booked',
+      );
+    }
+  }
+
+  // WAVE validation
+  if (
+    availability.schedulingType === 'WAVE'
+  ) {
+    const bookingCount =
+      await this.prisma.appointment.count({
+        where: {
+          recurringAvailabilityId:
+            availability.id,
+          appointmentDate: new Date(
+            createAppointmentDto.date,
+          ),
+          status: 'BOOKED',
+          NOT: {
+            id: appointment.id,
+          },
+        },
+      });
+
+    if (
+      bookingCount >=
+      (availability.capacity ?? 0)
+    ) {
+      throw new BadRequestException(
+        'Wave is full',
+      );
+    }
+  }
+
+  // Transaction
+  const updatedAppointment =
+    await this.prisma.$transaction(
+      async (tx) => {
+        return tx.appointment.update({
+          where: {
+            id: appointment.id,
+          },
+          data: {
+            recurringAvailabilityId:
+              availability.id,
+
+            appointmentDate: new Date(
+              createAppointmentDto.date,
+            ),
+
+            slotStart:
+              createAppointmentDto.startTime,
+
+            slotEnd:
+              createAppointmentDto.endTime,
+
+            schedulingType:
+              availability.schedulingType,
+          },
+        });
+      },
+    );
+
+  return {
+    message:
+      'Appointment rescheduled successfully',
+    appointment: updatedAppointment,
+  };
+  }
+  private validateThirtyMinuteRule(
+  appointmentDate: Date,
+  startTime?: string,
+) {
+
+  if (!startTime) return;
+
+  const appointmentDateTime =
+      new Date(appointmentDate);
+
+  const [hour, minute] =
+      startTime.split(":").map(Number);
+
+  appointmentDateTime.setHours(
+      hour,
+      minute,
+      0,
+      0,
+  );
+
+  const now =
+      new Date();
+
+  const difference =
+      appointmentDateTime.getTime() -
+      now.getTime();
+
+  if (
+      difference >= 0 &&
+      difference < 30 * 60 * 1000
+  ) {
+
+      throw new BadRequestException(
+        "Appointment cannot be modified within 30 minutes",
+      );
+
+  }
+
 }
 }
