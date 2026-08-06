@@ -81,17 +81,25 @@ export class AvailabilityService {
 
     // STREAM validation
 if (createAvailabilityDto.schedulingType === 'STREAM') {
+
   if (!createAvailabilityDto.slotDuration) {
     throw new BadRequestException(
       'Slot duration is required for STREAM scheduling',
     );
   }
 
-  if (createAvailabilityDto.capacity) {
+  if (!createAvailabilityDto.bufferTime) {
     throw new BadRequestException(
-      'Capacity should not be provided for STREAM scheduling',
+      'Buffer time is required for STREAM scheduling',
     );
   }
+
+  if (!createAvailabilityDto.capacity) {
+    throw new BadRequestException(
+      'Capacity is required for STREAM scheduling',
+    );
+  }
+
 }
 
 // WAVE validation
